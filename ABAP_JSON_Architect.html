@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABAP JSON Architect Pro</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            /* Renk Paleti */
+            --bg-body: #eceff4;
+            --bg-panel: #ffffff;
+            --border-color: #d8dee9;
+            --primary: #007acc;
+            --text-main: #333;
+            --text-muted: #666;
+
+            /* Syntax Highlighting (Light) */
+            --code-bg: #ffffff;
+            --c-key: #a31515;
+            --c-str: #0451a5;
+            --c-num: #098658;
+            --c-bool: #0000ff;
+            --c-kw: #af00db;
+            --c-br: #b4b400;
+
+            /* Bracket Match */
+            --match-bg: rgba(255, 215, 0, 0.4);
+            /* Gold highlight */
+            --match-border: 1px solid #ffd700;
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #1e1e1e;
+            --bg-panel: #252526;
+            --border-color: #333333;
+            --primary: #40a9ff;
+            --text-main: #d4d4d4;
+            --text-muted: #858585;
+
+            /* Syntax Highlighting (Dark) */
+            --code-bg: #1e1e1e;
+            --c-key: #9cdcfe;
+            --c-str: #ce9178;
+            --c-num: #b5cea8;
+            --c-bool: #569cd6;
+            --c-kw: #c586c0;
+            --c-br: #ffd700;
+
+            /* Bracket Match (Dark Mode Neon) */
+            --match-bg: rgba(100, 255, 100, 0.2);
+            --match-border: 1px solid #00ff00;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Segoe UI', Inter, sans-serif;
+            background: var(--bg-body);
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        /* HEADER */
+        header {
+            height: 45px;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            flex-shrink: 0;
+        }
+
+        .brand {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--primary);
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .lang-btn {
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px 10px;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .lang-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .author-link {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-right: 15px;
+            transition: color 0.2s;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .author-link:hover {
+            color: #0a66c2;
+            /* LinkedIn Blue */
+            background: rgba(10, 102, 194, 0.1);
+        }
+
+        /* WORKSPACE */
+        .workspace {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            height: calc(100vh - 45px);
+        }
+
+        .pane {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .pane.left {
+            flex: 4;
+            border-right: 1px solid var(--border-color);
+            background: var(--bg-panel);
+        }
+
+        .pane.right {
+            flex: 6;
+            background: var(--bg-panel);
+        }
+
+        /* TOOLBARS */
+        .toolbar {
+            height: 36px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            gap: 8px;
+            background: var(--bg-panel);
+            flex-shrink: 0;
+        }
+
+        .toolbar-label {
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-right: auto;
+        }
+
+        .btn-icon {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-size: 0.85rem;
+        }
+
+        .btn-icon:hover {
+            background: var(--bg-body);
+            color: var(--text-main);
+        }
+
+        .btn-action {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 2px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* SETTINGS */
+        .settings-bar {
+            padding: 8px 10px;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-panel);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .inp-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--text-muted);
+        }
+
+        input[type="text"],
+        select {
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 3px 6px;
+            border-radius: 2px;
+            font-family: monospace;
+            outline: none;
+            font-size: 0.8rem;
+        }
+
+        select {
+            cursor: pointer;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.75rem;
+        }
+
+        #rootName {
+            width: 60px;
+        }
+
+        #pStruct,
+        #pTable {
+            width: 40px;
+        }
+
+        #fieldSuffix {
+            width: 60px;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary);
+        }
+
+        /* EDITOR LAYERS */
+        .editor-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            min-height: 0;
+            display: flex;
+        }
+
+        .line-numbers {
+            background: var(--bg-body);
+            color: var(--text-muted);
+            padding: 10px 8px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 20px;
+            text-align: right;
+            user-select: none;
+            border-right: 1px solid var(--border-color);
+            overflow: hidden;
+            min-width: 40px;
+            white-space: pre;
+        }
+
+        .editor-wrapper {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .editor-font {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 20px;
+            letter-spacing: 0px;
+        }
+
+        .code-layer,
+        .textarea-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 10px;
+            margin: 0;
+            border: none;
+            white-space: pre;
+            overflow: auto;
+        }
+
+        .code-layer {
+            z-index: 1;
+            background: transparent;
+            color: var(--text-main);
+            pointer-events: none;
+        }
+
+        .textarea-layer {
+            z-index: 2;
+            background: transparent;
+            color: transparent;
+            caret-color: var(--text-main);
+            resize: none;
+            outline: none;
+        }
+
+        .textarea-layer::selection {
+            background: rgba(38, 79, 120, 0.5);
+            color: transparent;
+        }
+
+        .input-error {
+            box-shadow: inset 0 0 0 2px #ff4d4f !important;
+        }
+
+        /* OUTPUT */
+        .output-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .output-view {
+            flex: 1;
+            padding: 0;
+            overflow: auto;
+            background: var(--code-bg);
+            color: var(--text-main);
+            white-space: pre;
+            display: flex;
+        }
+
+        .output-line-numbers {
+            background: var(--bg-body);
+            color: var(--text-muted);
+            padding: 15px 8px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 20px;
+            text-align: right;
+            user-select: none;
+            border-right: 1px solid var(--border-color);
+            min-width: 40px;
+            white-space: pre;
+        }
+
+        .output-content {
+            flex: 1;
+            padding: 15px;
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .tab {
+            padding: 8px 15px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: var(--bg-body);
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            overflow: hidden;
+            flex-direction: column;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        /* HIGHLIGHT CLASSES */
+        .h-key {
+            color: var(--c-key);
+        }
+
+        .h-str {
+            color: var(--c-str);
+        }
+
+        .h-num {
+            color: var(--c-num);
+        }
+
+        .h-bool {
+            color: var(--c-bool);
+        }
+
+        .h-br {
+            color: var(--c-br);
+            font-weight: bold;
+        }
+
+        .abap-kw {
+            color: var(--c-kw);
+            font-weight: bold;
+        }
+
+        .abap-str {
+            color: var(--c-str);
+        }
+
+        .abap-com {
+            color: #6a9955;
+            font-style: italic;
+        }
+
+        /* ACTIVE BRACKET MATCH STYLE */
+        .matched-bracket {
+            background-color: var(--match-bg);
+            border: var(--match-border);
+            border-radius: 2px;
+            color: var(--text-main) !important;
+            /* Force text color visibility */
+            font-weight: bold;
+            box-shadow: 0 0 5px var(--match-bg);
+        }
+
+        /* Toast */
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.3s;
+            z-index: 99;
+        }
+
+        #toast.show {
+            opacity: 1;
+            bottom: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="brand"><i class="fa-solid fa-cube"></i> ABAP JSON Architect</div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <a href="https://www.linkedin.com/in/murattahtacii/" target="_blank" class="author-link"
+                title="LinkedIn Profile">
+                <i class="fa-brands fa-linkedin"></i> <span data-lang="devName">Murat Tahtacı</span>
+            </a>
+            <div style="display: flex; gap: 5px;">
+                <button class="lang-btn active" id="lang-tr" onclick="setLanguage('tr')">TR</button>
+                <button class="lang-btn" id="lang-en" onclick="setLanguage('en')">EN</button>
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()"><i class="fa-solid fa-circle-half-stroke"></i></button>
+        </div>
+    </header>
+
+    <div class="workspace">
+        <div class="pane left">
+            <div class="toolbar">
+                <span class="toolbar-label" data-lang="jsonEditor">JSON Editörü</span>
+                <button class="btn-icon" onclick="formatJSON()"><i class="fa-solid fa-align-left"></i></button>
+                <button class="btn-icon" onclick="clearInput()"><i class="fa-solid fa-trash"></i></button>
+            </div>
+            <div class="editor-container">
+                <div id="jsonLineNumbers" class="line-numbers"></div>
+                <div class="editor-wrapper">
+                    <pre id="highlightPre" class="code-layer editor-font"></pre>
+                    <textarea id="jsonInput" class="textarea-layer editor-font" spellcheck="false"
+                        oninput="handleInput()" onscroll="handleScroll()" onclick="checkBrackets()"
+                        onkeyup="checkBrackets()" data-lang-placeholder="jsonPlaceholder"></textarea>
+                </div>
+            </div>
+            <div class="settings-bar">
+                <div class="inp-group"><label data-lang="rootLabel">Root:</label><input type="text" id="rootName"
+                        value="" data-lang-placeholder="rootPlaceholder" oninput="convert()"></div>
+                <div class="inp-group"><label data-lang="strLabel">Str:</label><input type="text" id="pStruct"
+                        value="TS_" oninput="convert()"></div>
+                <div class="inp-group"><label data-lang="tabLabel">Tab:</label><input type="text" id="pTable"
+                        value="TT_" oninput="convert()"></div>
+
+                <div class="inp-group"><label data-lang="suffixLabel">Suffix:</label><input type="text" id="fieldSuffix"
+                        value="" placeholder="_field" oninput="convert()"></div>
+
+                <div class="inp-group">
+                    <select id="suffixTarget" onchange="convert()">
+                        <option value="abap">ABAP +</option>
+                        <option value="json">JSON +</option>
+                    </select>
+                </div>
+
+                <div class="inp-group"><input type="checkbox" id="snake" checked onchange="convert()"> <label
+                        for="snake" data-lang="snakeLabel">Snake_Case</label></div>
+                <button class="btn-action" onclick="convert()" data-lang="convertBtn">DÖNÜŞTÜR</button>
+            </div>
+        </div>
+
+        <div class="pane right">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('types')" data-lang="tabTypes">ABAP Types</div>
+                <div class="tab" onclick="switchTab('mapping')" data-lang="tabMapping">Mapping</div>
+                <div class="tab" onclick="switchTab('template')" data-lang="tabTemplate">Code Template</div>
+            </div>
+            <div class="output-wrapper">
+                <div id="view-types" class="tab-content active">
+                    <div class="toolbar"><span class="toolbar-label"
+                            data-lang="toolbarStructure">Structure</span><button class="btn-icon"
+                            onclick="copyToClip('codeTypes')"><i class="fa-regular fa-copy"></i></button></div>
+                    <div class="output-view editor-font">
+                        <div id="typesLineNumbers" class="output-line-numbers"></div>
+                        <div id="codeTypes" class="output-content"></div>
+                    </div>
+                </div>
+                <div id="view-mapping" class="tab-content">
+                    <div class="toolbar"><span class="toolbar-label" data-lang="toolbarMapping">Mapping
+                            Logic</span><button class="btn-icon" onclick="copyToClip('codeMapping')"><i
+                                class="fa-regular fa-copy"></i></button></div>
+                    <div class="output-view editor-font">
+                        <div id="mappingLineNumbers" class="output-line-numbers"></div>
+                        <div id="codeMapping" class="output-content"></div>
+                    </div>
+                </div>
+                <div id="view-template" class="tab-content">
+                    <div class="toolbar"><span class="toolbar-label" data-lang="toolbarTemplate">Template</span><button
+                            class="btn-icon" onclick="copyToClip('codeTemplate')"><i
+                                class="fa-regular fa-copy"></i></button></div>
+                    <div class="output-view editor-font">
+                        <div id="templateLineNumbers" class="output-line-numbers"></div>
+                        <div id="codeTemplate" class="output-content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" data-lang="toast">Kopyalandı!</div>
+
+    <script>
+        const el = {
+            input: document.getElementById('jsonInput'),
+            pre: document.getElementById('highlightPre'),
+            types: document.getElementById('codeTypes'),
+            mapping: document.getElementById('codeMapping'),
+            template: document.getElementById('codeTemplate'),
+            jsonLineNumbers: document.getElementById('jsonLineNumbers'),
+            typesLineNumbers: document.getElementById('typesLineNumbers'),
+            mappingLineNumbers: document.getElementById('mappingLineNumbers'),
+            templateLineNumbers: document.getElementById('templateLineNumbers')
+        };
+
+        const translations = {
+            tr: {
+                jsonEditor: 'JSON Editörü', jsonPlaceholder: '// JSON yapıştır...', rootPlaceholder: '(Boş)', convertBtn: 'DÖNÜŞTÜR',
+                tabTypes: 'ABAP Types', tabMapping: 'Mapping', tabTemplate: 'Code Template',
+                toolbarStructure: 'Structure', toolbarMapping: 'Mapping Logic', toolbarTemplate: 'Template', toast: 'Kopyalandı!',
+                rootLabel: 'Root:', strLabel: 'Str:', tabLabel: 'Tab:', snakeLabel: 'Snake_Case',
+                suffixLabel: 'Suffix:', devName: 'Murat Tahtacı'
+            },
+            en: {
+                jsonEditor: 'JSON Editor', jsonPlaceholder: '// Paste JSON...', rootPlaceholder: '(Empty)', convertBtn: 'CONVERT',
+                tabTypes: 'ABAP Types', tabMapping: 'Mapping', tabTemplate: 'Code Template',
+                toolbarStructure: 'Structure', toolbarMapping: 'Mapping Logic', toolbarTemplate: 'Template', toast: 'Copied!',
+                rootLabel: 'Root:', strLabel: 'Str:', tabLabel: 'Tab:', snakeLabel: 'Snake_Case',
+                suffixLabel: 'Suffix:', devName: 'Murat Tahtacı'
+            }
+        };
+
+        function setLanguage(lang) {
+            localStorage.setItem('language', lang);
+            applyLang(lang);
+
+            // UI Update for buttons
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById('lang-' + lang);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            convert();
+        }
+
+        function applyLang(lang) {
+            const t = translations[lang] || translations.tr;
+            document.querySelectorAll('[data-lang]').forEach(el => {
+                const key = el.getAttribute('data-lang');
+                if (t[key]) el.textContent = t[key];
+            });
+            document.querySelectorAll('[data-lang-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-lang-placeholder');
+                if (t[key]) el.placeholder = t[key];
+            });
+        }
+
+        let rawData = { types: "", mapping: "", template: "" };
+        let typeDefs = [];
+        let mapLines = [];
+
+        // --- Theme ---
+        function toggleTheme() {
+            const h = document.documentElement;
+            const n = h.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            h.setAttribute('data-theme', n);
+            localStorage.setItem('theme', n);
+        }
+
+        // Load Theme
+        (function () {
+            const t = localStorage.getItem('theme');
+            if (t) document.documentElement.setAttribute('data-theme', t);
+        })();
+
+        // --- Line Numbers Update ---
+        function updateLineNumbers(content, lineNumbersEl) {
+            if (!content || !lineNumbersEl) return;
+            const lines = content.split('\n').length;
+            let html = '';
+            for (let i = 1; i <= lines; i++) {
+                html += i + '\n';
+            }
+            lineNumbersEl.textContent = html;
+        }
+
+
+        // --- Editor Logic ---
+        let debounceTimer;
+        function handleInput() {
+            renderHighlight();
+            updateLineNumbers(el.input.value, el.jsonLineNumbers);
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(convert, 300);
+        }
+
+        function handleScroll() {
+            el.pre.scrollTop = el.input.scrollTop;
+            el.pre.scrollLeft = el.input.scrollLeft;
+            el.jsonLineNumbers.scrollTop = el.input.scrollTop;
+        }
+
+        // --- Bracket Matching Logic ---
+        function checkBrackets() {
+            renderHighlight(); // Re-render to clear old highlight
+        }
+
+        function renderHighlight() {
+            const text = el.input.value;
+            let html = highlightJSON(text);
+
+            // Bracket Matching indices
+            const cursor = el.input.selectionStart;
+            const matchIndices = findMatchingBracketIndices(text, cursor);
+
+            if (matchIndices.length > 0) {
+                // Bizim highlightJSON fonksiyonumuz HTML üretiyor. 
+                // HTML içindeki raw text indexlerini bulup span class eklemek zor.
+                // Bu yüzden basit bir yöntem: Text üzerinde işlem yapmak yerine
+                // highlightJSON içinde bu indexlere denk gelen karakterlere class atayacağız.
+                // Ancak performans için highlightJSON'a bu indexleri parametre geçelim.
+                html = highlightJSON(text, matchIndices);
+            }
+
+            el.pre.innerHTML = html + "<br>";
+        }
+
+        function findMatchingBracketIndices(text, cursor) {
+            // Check character before cursor or after cursor
+            let indices = [];
+            const checkAt = (idx) => {
+                const char = text[idx];
+                if ('{['.includes(char)) return { char, dir: 1, type: 'open', idx };
+                if (']}'.includes(char)) return { char, dir: -1, type: 'close', idx };
+                return null;
+            };
+
+            // VS Code logic: check char to left first, if not check char to right
+            let match = cursor > 0 ? checkAt(cursor - 1) : null;
+            if (!match && cursor < text.length) match = checkAt(cursor);
+
+            if (match) {
+                const pair = findPair(text, match.idx, match.char, match.dir);
+                if (pair !== -1) {
+                    return [match.idx, pair];
+                }
+            }
+            return [];
+        }
+
+        function findPair(text, start, char, dir) {
+            const pairs = { '{': '}', '[': ']', '}': '{', ']': '[' };
+            const target = pairs[char];
+            let depth = 0;
+
+            for (let i = start + dir; i >= 0 && i < text.length; i += dir) {
+                if (text[i] === char) depth++;
+                else if (text[i] === target) {
+                    if (depth === 0) return i;
+                    depth--;
+                }
+            }
+            return -1;
+        }
+
+        // --- Syntax Highlighter (Modified for Bracket Match) ---
+        function highlightJSON(json, matchIndices = []) {
+            if (!json) return "";
+            const escape = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+            let result = "";
+            let i = 0;
+
+            // Regex tokenizer manual loop would be safer for indexing, 
+            // but complex regex replace is faster. 
+            // To handle styling specific indices, we need a tokenizer loop.
+
+            const tokenRegex = /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?([eE][+\-]?\d+)?|[\[\]\{\},]|\s+|.)/g;
+            let match;
+            let lastIndex = 0;
+
+            // Since replacing entire text, let's just mark which ranges are what
+            // But strict index matching is needed.
+            // Let's fallback to regex replace but inject the class if index matches.
+            // Actually, manual splitting is better to preserve index integrity.
+
+            // FAST METHOD: Use the regex replace, but check if the match index is in our list.
+            // Problem: Regex replace doesn't give global index easily in nested callbacks in older browsers, 
+            // but we can track it.
+
+            return json.replace(tokenRegex, function (m, g1, g2, g3, g4, g5, offset) {
+                // m = match, offset = global index
+                let cls = 'h-num';
+                let content = escape(m);
+
+                // Check if this token is one of our matched brackets
+                // matchIndices contains exact indices of single chars.
+                // Brackets are single char tokens usually.
+
+                if (/^"/.test(m)) {
+                    cls = (/:$/.test(m)) ? 'h-key' : 'h-str';
+                } else if (/true|false|null/.test(m)) {
+                    cls = 'h-bool';
+                } else if (/[\[\]\{\}]/.test(m)) {
+                    cls = 'h-br';
+                    // Check strict index match for highlighting
+                    if (matchIndices.includes(offset)) {
+                        cls += ' matched-bracket';
+                    }
+                } else if (/,/.test(m)) {
+                    cls = 'abap-kw';
+                } else if (/^\s+$/.test(m)) {
+                    return content; // Whitespace
+                } else {
+                    return content; // Unknown/Invalid text
+                }
+
+                return `<span class="${cls}">${content}</span>`;
+            });
+        }
+
+        function formatJSON() {
+            try { el.input.value = JSON.stringify(JSON.parse(el.input.value), null, 4); handleInput(); } catch (e) { }
+        }
+        function clearInput() { el.input.value = ""; handleInput(); }
+
+        // --- CONVERSION LOGIC ---
+        function convert() {
+            const txt = el.input.value;
+            if (!txt.trim()) return;
+
+            let root = document.getElementById('rootName').value.trim().toUpperCase();
+            const pS = document.getElementById('pStruct').value || "TS_";
+            const pT = document.getElementById('pTable').value || "TT_";
+            const suffix = document.getElementById('fieldSuffix').value || "";
+            const suffixTarget = document.getElementById('suffixTarget').value;
+            const snake = document.getElementById('snake').checked;
+
+            typeDefs = [];
+            mapLines = [];
+            definedStructures = {};
+
+            try {
+                const json = JSON.parse(txt);
+                parseNode(json, root, pS, pT, snake, suffix, suffixTarget);
+
+                // Output Generation
+                let abap = `* JSON Structures\nTYPES:\n`;
+                typeDefs.forEach(b => abap += b + "\n\n");
+                rawData.types = abap;
+                el.types.innerHTML = highlightABAP(abap);
+                updateLineNumbers(abap, el.typesLineNumbers);
+
+                // Mapping
+                let mapCode = `DATA: lt_map TYPE /ui2/cl_json=>name_mappings.\n\n`;
+                if (mapLines.length) mapCode += `lt_map = VALUE #(\n` + [...new Set(mapLines)].join("\n") + `\n).`;
+                else mapCode += `* No mapping needed.`;
+                rawData.mapping = mapCode;
+                el.mapping.innerHTML = highlightABAP(mapCode);
+                updateLineNumbers(mapCode, el.mappingLineNumbers);
+
+                // Template
+                genTemplate(root || "ROOT", pS, pT, mapLines.length > 0, snake);
+
+                el.input.classList.remove('input-error');
+            } catch (e) {
+                el.types.innerText = "Error: " + e.message;
+                el.input.classList.add('input-error');
+            }
+        }
+
+        // --- REVISED NAMING LOGIC ---
+        function parseNode(node, name, pS, pT, snake, suffix, suffixTarget) {
+            if (node === null) return "TYPE string";
+            const type = typeof node;
+
+            if (type === 'string') {
+                if (/^\d{4}-\d{2}-\d{2}$/.test(node)) return "TYPE d";
+                if (/^\d{2}:\d{2}:\d{2}$/.test(node)) return "TYPE t";
+                return "TYPE string";
+            }
+            if (type === 'number') return Number.isInteger(node) ? (Math.abs(node) > 2e9 ? "TYPE p LENGTH 16 DECIMALS 0" : "TYPE i") : "TYPE p LENGTH 16 DECIMALS 3";
+            if (type === 'boolean') return "TYPE abap_bool";
+
+            if (Array.isArray(node)) {
+                if (node.length === 0) return "TYPE STANDARD TABLE OF string WITH EMPTY KEY";
+
+                const sing = makeSingular(name);
+                const lType = parseNode(node[0], sing, pS, pT, snake, suffix, suffixTarget);
+
+                if (lType.includes("TYPE " + pS.replace(/_+$/, ''))) {
+                    const structName = lType.replace("TYPE ", "").trim();
+                    let cleanPS = pS;
+                    let cleanPT = pT;
+                    if (structName.indexOf(pS) === -1 && pS.endsWith('_')) {
+                        cleanPS = pS.replace(/_+$/, '');
+                        cleanPT = pT.replace(/_+$/, '');
+                    }
+                    const tableTypeName = structName.replace(cleanPS, cleanPT);
+                    return `TYPE ${tableTypeName}`;
+                }
+                return `TYPE STANDARD TABLE OF ${lType.replace("TYPE ", "")} WITH EMPTY KEY`;
+            }
+
+            if (type === 'object') {
+                let contentLines = [];
+                let contentSignature = "";
+
+                for (const k in node) {
+                    let abapK = toValid(k, snake);
+                    let jsonK = k;
+
+                    if (suffix) {
+                        const sUpper = suffix.toUpperCase();
+                        if (suffixTarget === 'abap') {
+                            if (!abapK.endsWith(sUpper)) abapK += sUpper;
+                        } else if (suffixTarget === 'json') {
+                            jsonK = k + suffix;
+                        }
+                    }
+
+                    if (abapK !== k || jsonK !== k) {
+                        mapLines.push(`    ( abap = '${abapK}' json = '${jsonK}' )`);
+                    }
+
+                    const childType = parseNode(node[k], k, pS, pT, snake, suffix, suffixTarget);
+                    const line = `    ${abapK.padEnd(25, ' ')} ${childType},`;
+                    contentLines.push(line);
+                    contentSignature += line.trim();
+                }
+
+                // 2. İsimlendirme Mantığı (SİZİN İSTEDİĞİNİZ KISIM)
+                let baseName = toValid(name, snake);
+                let currentPS = pS;
+
+                // Eğer isim boşsa (Root boşsa), Prefix'in sonundaki _ işaretini sil.
+                // TS_ -> TS olur.
+                if (!baseName) {
+                    currentPS = pS.replace(/_+$/, '');
+                }
+
+                let structName = currentPS + baseName;
+                let finalStructName = structName;
+                let counter = 2;
+
+                // 3. Çakışma Kontrolü
+                while (true) {
+                    if (definedStructures[finalStructName]) {
+                        if (definedStructures[finalStructName] === contentSignature) {
+                            return `TYPE ${finalStructName}`; // Aynı yapı varsa kullan
+                        } else {
+                            finalStructName = `${structName}_V${counter}`; // İsim çakıştı, versiyonla
+                            counter++;
+                        }
+                    } else {
+                        definedStructures[finalStructName] = contentSignature; // Yeni kayıt
+                        break;
+                    }
+                }
+
+                // 4. ABAP Kodu Oluşturma
+                // Table Type ismini belirlerken kullanılan Prefix'e göre dönüşüm yap
+                // Eğer currentPS "TS" ise ve pT "TT_" ise, pT'yi de "TT" yapmamız lazım.
+                let currentPT = pT;
+                if (!baseName) currentPT = pT.replace(/_+$/, '');
+
+                const tableTypeName = finalStructName.replace(currentPS, currentPT);
+
+                let abapBlock = [`  BEGIN OF ${finalStructName},`];
+                abapBlock = abapBlock.concat(contentLines);
+                abapBlock.push(`  END OF ${finalStructName},`);
+                abapBlock.push(`  ${tableTypeName} TYPE STANDARD TABLE OF ${finalStructName} WITH EMPTY KEY.`);
+
+                typeDefs.push(abapBlock.join('\n'));
+
+                return `TYPE ${finalStructName}`;
+            }
+            return "TYPE string";
+        }
+
+        function toValid(s, snake) {
+            if (!s) return "";
+            let r = s;
+            if (snake) {
+                // More robust camelToSnake
+                r = r.replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+                    .replace(/([A-Z])([A-Z][a-z])/g, '$1_$2');
+            }
+            r = r.replace(/[^a-zA-Z0-9_]/g, '_');
+            if (/^\d/.test(r)) r = 'F_' + r;
+
+            r = r.toUpperCase();
+            r = r.replace(/_+/g, '_').replace(/^_/, '').replace(/_$/, '');
+            return r;
+        }
+
+        function genTemplate(root, pS, pT, hasMap, snake) {
+            const lang = localStorage.getItem('language') || 'tr';
+            const templates = {
+                tr: `*═══════════════════════════════════════════════════════════════════════════*
+* MODERN ABAP WEB SERVICE CODE TEMPLATES
+*═══════════════════════════════════════════════════════════════════════════*
+
+*───────────────────────────────────────────────────────────────────────────*
+* 1. JSON İŞLEMLERİ (Serialization & Deserialization)
+*───────────────────────────────────────────────────────────────────────────*
+
+*─── 1.1: ABAP Verisini JSON Formatına Çevirme (Serialize) ───
+DATA(lv_json_output) = /ui2/cl_json=>serialize(
+  EXPORTING
+    data             = ls_abap_data
+    pretty_name      = /ui2/cl_json=>pretty_mode-camel_case
+    compress         = abap_true
+    numc_as_string   = abap_true
+).
+
+*─── 1.2: JSON Verisini ABAP Yapısına Çevirme (Deserialize) ───
+/ui2/cl_json=>deserialize(
+  EXPORTING
+    json             = lv_json_input
+    pretty_name      = /ui2/cl_json=>pretty_mode-camel_case
+    conversion_exits = abap_true
+  CHANGING
+    data             = ls_target_structure
+).
+
+*─── 1.3: Özel Alan Eşleştirme (Name Mapping) ile Serialize ───
+DATA(lt_mapping) = VALUE /ui2/cl_json=>name_mappings(
+  ( abap = 'MATNR' json = 'productId' )
+  ( abap = 'WERKS' json = 'plantId' )
+).
+DATA(lv_custom_json) = /ui2/cl_json=>serialize(
+  EXPORTING
+    data          = ls_material_data
+    name_mappings = lt_mapping
+).
+
+*───────────────────────────────────────────────────────────────────────────*
+* 2. HTTP İSTEMCİ İŞLEMLERİ (HTTP Client)
+*───────────────────────────────────────────────────────────────────────────*
+
+*─── 2.1: SM59 Hedefi ile İstemci Oluşturma (Best Practice) ───
+DATA: lo_client TYPE REF TO if_http_client.
+cl_http_client=>create_by_destination(
+  EXPORTING destination = 'Z_MY_API_DESTINATION'
+  IMPORTING client      = lo_client
+).
+
+*─── 2.2: Bearer Token ile POST İsteği Gönderme ───
+lo_client->request->set_method( if_http_request=>co_request_method_post ).
+lo_client->request->set_content_type( 'application/json; charset=utf-8' ).
+lo_client->request->set_header_field( name = 'Authorization' value = |Bearer { lv_token }| ).
+lo_client->request->set_cdata( lv_json_payload ).
+lo_client->send( ).
+lo_client->receive( ).
+DATA(lv_response) = lo_client->response->get_cdata( ).
+lo_client->close( ).
+
+*─── 2.3: URL Parametreleri ile GET İsteği ───
+lo_client->request->set_method( if_http_request=>co_request_method_get ).
+lo_client->request->set_form_field( name = 'orderId' value = '12345' ).
+lo_client->send( ).
+lo_client->receive( ).`,
+                en: `*═══════════════════════════════════════════════════════════════════════════*
+* MODERN ABAP WEB SERVICE CODE TEMPLATES
+*═══════════════════════════════════════════════════════════════════════════*
+
+*───────────────────────────────────────────────────────────────────────────*
+* 1. JSON OPERATIONS (Serialization & Deserialization)
+*───────────────────────────────────────────────────────────────────────────*
+
+*─── 1.1: Convert ABAP Data to JSON Format (Serialize) ───
+DATA(lv_json_output) = /ui2/cl_json=>serialize(
+  EXPORTING
+    data             = ls_abap_data
+    pretty_name      = /ui2/cl_json=>pretty_mode-camel_case
+    compress         = abap_true
+    numc_as_string   = abap_true
+).
+
+*─── 1.2: Convert JSON Data to ABAP Structure (Deserialize) ───
+/ui2/cl_json=>deserialize(
+  EXPORTING
+    json             = lv_json_input
+    pretty_name      = /ui2/cl_json=>pretty_mode-camel_case
+    conversion_exits = abap_true
+  CHANGING
+    data             = ls_target_structure
+).
+
+*─── 1.3: Serialize with Custom Field Mapping (Name Mapping) ───
+DATA(lt_mapping) = VALUE /ui2/cl_json=>name_mappings(
+  ( abap = 'MATNR' json = 'productId' )
+  ( abap = 'WERKS' json = 'plantId' )
+).
+DATA(lv_custom_json) = /ui2/cl_json=>serialize(
+  EXPORTING
+    data          = ls_material_data
+    name_mappings = lt_mapping
+).
+
+*───────────────────────────────────────────────────────────────────────────*
+* 2. HTTP CLIENT OPERATIONS (HTTP Client)
+*───────────────────────────────────────────────────────────────────────────*
+
+*─── 2.1: Create Client Using SM59 Destination (Best Practice) ───
+DATA: lo_client TYPE REF TO if_http_client.
+cl_http_client=>create_by_destination(
+  EXPORTING destination = 'Z_MY_API_DESTINATION'
+  IMPORTING client      = lo_client
+).
+
+*─── 2.2: Send POST Request with Bearer Token ───
+lo_client->request->set_method( if_http_request=>co_request_method_post ).
+lo_client->request->set_content_type( 'application/json; charset=utf-8' ).
+lo_client->request->set_header_field( name = 'Authorization' value = |Bearer { lv_token }| ).
+lo_client->request->set_cdata( lv_json_payload ).
+lo_client->send( ).
+lo_client->receive( ).
+DATA(lv_response) = lo_client->response->get_cdata( ).
+lo_client->close( ).
+
+*─── 2.3: GET Request with URL Parameters ───
+lo_client->request->set_method( if_http_request=>co_request_method_get ).
+lo_client->request->set_form_field( name = 'orderId' value = '12345' ).
+lo_client->send( ).
+lo_client->receive( ).`
+            };
+
+            const t = templates[lang] || templates.en;
+            rawData.template = t;
+            el.template.innerHTML = highlightABAP(t);
+            updateLineNumbers(t, el.templateLineNumbers);
+        }
+
+        function highlightABAP(code) {
+            if (!code) return "";
+            let h = code.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+            h = h.replace(/'([^']*)'/g, '<span class="abap-str">\'$1\'</span>');
+            h = h.replace(/^(\*.*)$/gm, '<span class="abap-com">$1</span>');
+            const kws = ["TYPES", "BEGIN OF", "END OF", "DATA", "TYPE", "STANDARD TABLE OF"];
+            const reg = new RegExp('\\b(' + kws.join('|') + ')\\b', 'g');
+            h = h.replace(reg, '<span class="abap-kw">$1</span>');
+            return h;
+        }
+
+        function makeSingular(s) {
+            s = s.toUpperCase();
+            if (s.endsWith("IES")) return s.slice(0, -3) + "Y";
+            if (s.endsWith("S") && !s.endsWith("SS")) return s.slice(0, -1);
+            return s;
+        }
+
+        function switchTab(id) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('view-' + id).classList.add('active');
+            const tabs = document.querySelectorAll('.tab');
+            if (id === 'types') tabs[0].classList.add('active');
+            else if (id === 'mapping') tabs[1].classList.add('active');
+            else if (id === 'template') tabs[2].classList.add('active');
+        }
+
+        function copyToClip(key) {
+            navigator.clipboard.writeText(rawData[key.replace('code', '').toLowerCase()] || rawData.types);
+            document.getElementById('toast').classList.add('show');
+            setTimeout(() => document.getElementById('toast').classList.remove('show'), 2000);
+        }
+
+        (function () {
+            const savedLang = localStorage.getItem('language') || 'tr';
+            setLanguage(savedLang);
+            const t = localStorage.getItem('theme');
+            if (t) document.documentElement.setAttribute('data-theme', t);
+            el.input.value = JSON.stringify({ "data": { "items": [{ "id": 1, "val": "A" }] } }, null, 4);
+            handleInput();
+        })();
+    </script>
+</body>
+
+</html>
