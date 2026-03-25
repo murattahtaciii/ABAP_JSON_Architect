@@ -649,7 +649,7 @@ body.fmt-json [data-fmt-xml]{display:none!important}
 
   <div class="sspace"></div>
 
-  <button class="cbtn" id="cbtn" onclick="doConvert()">
+  <button class="cbtn" id="cbtn" onclick="fmt==='xml'?doConvertXml():doConvert()">
     <i data-lucide="loader-2" class="cspin"></i>
     <i data-lucide="play" class="cgo" style="width:12px;height:12px"></i>
     <span data-lang="btnConvert">DÖNÜŞTÜR</span>
@@ -1003,7 +1003,9 @@ const t = k => (L[lang]||L.tr)[k] || k;
 
 function setLang(l){
   lang = l; localStorage.setItem('lang',l);
-  applyLang(); updateTips(); genTemplate(); schedConvert();
+  applyLang(); updateTips();
+  if(fmt==='xml') genXmlTemplate(); else genTemplate();
+  schedConvert();
 }
 function applyLang(){
   const m = L[lang]||L.tr;
@@ -1021,6 +1023,8 @@ function applyLang(){
   const sel = document.getElementById('cf-sfxt');
   sel.options[0].textContent = m.sfxAbap || '→ ABAP';
   sel.options[1].textContent = m.sfxJson || '→ JSON';
+  // Reapply format-specific titles after language change
+  if(typeof applyFormat === 'function') applyFormat(fmt);
 }
 function updateTips(){
   const m = L[lang]||L.tr;
@@ -1138,9 +1142,12 @@ function applyFormat(f){
     var model = editor.getModel();
     if(model) monaco.editor.setModelLanguage(model, f==='xml'?'xml':'json');
   }
-  // Update format-sensitive empty state hints
+  // Update format-sensitive empty state hints and tooltips
   var empTypesHint = document.querySelector('#emp-types .empty-s');
   if(empTypesHint) empTypesHint.textContent = t(f==='xml'?'empTypesHintXml':'empTypesHint');
+  // Update sample button tooltip
+  var sampleBtn = document.querySelector('[data-tip-key="tipSample"]');
+  if(sampleBtn) sampleBtn.setAttribute('data-tip', t(f==='xml'?'tipSampleXml':'tipSample'));
 }
 
 function setFormat(f){
@@ -1290,7 +1297,7 @@ function doConvertXml(){
     document.getElementById('bdg-types').textContent = typeDefs.length||'';
 
     // iXML Code
-    const ixmlCode = genIXMLCode(rootEl, rootName, pS, snake);
+    const ixmlCode = genIXMLCode(rootEl, rootName, pS, snake, flatAttr);
     rawOut.ixml = ixmlCode;
     document.getElementById('out-ixml').innerHTML = hlABAP(ixmlCode);
     setLN('ln-ixml', ixmlCode);
@@ -1338,10 +1345,23 @@ function xmlParseElement(el, name, pS, pT, snake, flatAttr, isArrayItem){
 
   const lines=[], sig_parts=[];
 
-  if(flatAttr){
-    for(var ai=0; ai<attrs.length; ai++){
-      var ak2 = toV(attrs[ai].name, snake);
-      var ln2 = '    '+ak2.padEnd(25)+' TYPE string,  " @'+attrs[ai].name;
+  if(attrs.length > 0){
+    if(flatAttr){
+      for(var ai=0; ai<attrs.length; ai++){
+        var ak2 = toV(attrs[ai].name, snake);
+        var ln2 = '    '+ak2.padEnd(25)+' TYPE string,  " @'+attrs[ai].name;
+        lines.push(ln2); sig_parts.push(ln2.trim());
+      }
+    } else {
+      // Nested: create a sub-structure for attributes
+      var attrLines = [];
+      for(var ai=0; ai<attrs.length; ai++){
+        var ak2 = toV(attrs[ai].name, snake);
+        attrLines.push('    '+ak2.padEnd(25)+' TYPE string,');
+      }
+      var attrStructName = pS + toV(name, snake) + '_ATTR';
+      typeDefs.push('TYPES:\n  BEGIN OF '+attrStructName+',\n'+attrLines.join('\n')+'\n  END OF '+attrStructName+'.');
+      var ln2 = '    ATTRIBUTES'.padEnd(29)+' TYPE '+attrStructName+',';
       lines.push(ln2); sig_parts.push(ln2.trim());
     }
   }
@@ -1414,7 +1434,7 @@ function inferAbapType(text){
 /* ══════════════════════════════════════════════
    iXML CODE GENERATOR
 ══════════════════════════════════════════════ */
-function genIXMLCode(rootEl, rootName, pS, snake){
+function genIXMLCode(rootEl, rootName, pS, snake, flatAttr){
   var tr2 = lang==='tr';
   var structName = pS + toV(rootName, snake);
   var rootTag = rootEl.tagName;
@@ -1437,20 +1457,27 @@ function genIXMLCode(rootEl, rootName, pS, snake){
   code += '* '+(tr2?'Root elemana git':'Navigate to root element')+'\n';
   code += 'DATA(lo_root) = lo_doc->find_from_name( name = \''+rootTag+'\' ).\n';
   code += 'DATA ls_data TYPE '+structName+'.\n\n';
-  code += genIXMLExtract(rootEl, 'lo_root', 'ls_data', snake, 0);
+  code += genIXMLExtract(rootEl, 'lo_root', 'ls_data', snake, flatAttr, 0);
   return code;
 }
 
-function genIXMLExtract(el, varName, structVar, snake, depth){
+function genIXMLExtract(el, varName, structVar, snake, flatAttr, depth){
   var childElements = Array.from(el.children);
   var attrs = Array.from(el.attributes);
   var indent = '';
   for(var di=0;di<depth;di++) indent+='  ';
   var code = '';
 
-  for(var ai2=0;ai2<attrs.length;ai2++){
-    var field0 = toV(attrs[ai2].name, snake);
-    code += indent+structVar+'-'+field0+' = '+varName+'->get_attribute( name = \''+attrs[ai2].name+'\' ).\n';
+  if(attrs.length > 0 && flatAttr){
+    for(var ai2=0;ai2<attrs.length;ai2++){
+      var field0 = toV(attrs[ai2].name, snake);
+      code += indent+structVar+'-'+field0+' = '+varName+'->get_attribute( name = \''+attrs[ai2].name+'\' ).\n';
+    }
+  } else if(attrs.length > 0){
+    for(var ai2=0;ai2<attrs.length;ai2++){
+      var field0 = toV(attrs[ai2].name, snake);
+      code += indent+structVar+'-ATTRIBUTES-'+field0+' = '+varName+'->get_attribute( name = \''+attrs[ai2].name+'\' ).\n';
+    }
   }
 
   var tagCounts2 = {};
@@ -1475,7 +1502,7 @@ function genIXMLExtract(el, varName, structVar, snake, depth){
       code += indent+'    DATA ls_'+fLow+' LIKE LINE OF '+structVar+'-'+field2+'.\n';
       code += indent+'    CLEAR ls_'+fLow+'.\n';
       if(hasKids2){
-        code += genIXMLExtract(ch2, 'lo_node_'+fLow, 'ls_'+fLow, snake, depth+2);
+        code += genIXMLExtract(ch2, 'lo_node_'+fLow, 'ls_'+fLow, snake, flatAttr, depth+2);
       } else {
         code += indent+'    ls_'+fLow+' = lo_node_'+fLow+'->get_value( ).\n';
       }
@@ -1487,10 +1514,13 @@ function genIXMLExtract(el, varName, structVar, snake, depth){
       code += '\n'+indent+'* '+(lang==='tr'?'\u0130\u00e7 yap\u0131y\u0131 oku':'Read nested structure')+': '+ch2.tagName+'\n';
       code += indent+'DATA(lo_'+fLow+') = '+varName+'->find_from_name( name = \''+ch2.tagName+'\' ).\n';
       code += indent+'IF lo_'+fLow+' IS NOT INITIAL.\n';
-      code += genIXMLExtract(ch2, 'lo_'+fLow, structVar+'-'+field2, snake, depth+1);
+      code += genIXMLExtract(ch2, 'lo_'+fLow, structVar+'-'+field2, snake, flatAttr, depth+1);
       code += indent+'ENDIF.\n';
     } else {
-      code += indent+structVar+'-'+field2+' = '+varName+'->find_from_name( name = \''+ch2.tagName+'\' )->get_value( ).\n';
+      code += indent+'DATA(lo_'+fLow+') = '+varName+'->find_from_name( name = \''+ch2.tagName+'\' ).\n';
+      code += indent+'IF lo_'+fLow+' IS NOT INITIAL.\n';
+      code += indent+'  '+structVar+'-'+field2+' = lo_'+fLow+'->get_value( ).\n';
+      code += indent+'ENDIF.\n';
     }
   }
   return code;
@@ -1515,17 +1545,16 @@ function genSTElement(el, refPath, snake, depth){
   for(var di2=0;di2<depth;di2++) indent+='    ';
   var childElements = Array.from(el.children);
   var attrs = Array.from(el.attributes);
-  var st = indent+'<'+el.tagName;
+  var st = indent+'<'+el.tagName+'>\n';
 
   for(var ai3=0;ai3<attrs.length;ai3++){
     var field3 = toV(attrs[ai3].name, snake);
-    st += '>\n'+indent+'  <tt:attribute name="'+attrs[ai3].name+'" value-ref="'+refPath+'.'+field3+'"/>';
+    st += indent+'  <tt:attribute name="'+attrs[ai3].name+'" value-ref="'+refPath+'.'+field3+'"/>\n';
   }
   if(attrs.length && childElements.length===0){
-    st += '\n'+indent+'</'+el.tagName+'>\n';
+    st += indent+'</'+el.tagName+'>\n';
     return st;
   }
-  st += '>\n';
 
   var tagCounts3 = {};
   for(var ci6=0;ci6<childElements.length;ci6++) tagCounts3[childElements[ci6].tagName] = (tagCounts3[childElements[ci6].tagName]||0)+1;
@@ -1736,9 +1765,9 @@ function onEditorChange(){
     if(detected !== fmt){
       fmt = detected;
       applyFormat(fmt);
+      switchTab('types'); // ensure visible tab when format changes
     }
   }
-  _manualFmt = false; // reset after each change cycle
 
   if(fmt==='xml'){
     const result = parseXML(val);
@@ -1960,7 +1989,7 @@ function treeExpandAll(exp){
 let rawOut = { types:'', mapping:'', template:'', ixml:'', st:'' };
 let typeDefs=[], mapLines=[], definedStructures={};
 
-function schedConvert(){ clearTimeout(_dbt); _dbt=setTimeout(doConvert,300); }
+function schedConvert(){ clearTimeout(_dbt); _dbt=setTimeout(function(){ fmt==='xml'?doConvertXml():doConvert(); },300); }
 
 function doConvert(){
   const val = editor ? editor.getValue() : '';
@@ -2401,7 +2430,7 @@ function maybeClose(e){ if(e.target.id==='modal') closeModal(); }
 /* ── Keyboard ── */
 document.addEventListener('keydown',e=>{
   const ctrl=e.ctrlKey||e.metaKey;
-  if(ctrl&&e.key==='Enter'){e.preventDefault();doConvert();}
+  if(ctrl&&e.key==='Enter'){e.preventDefault();fmt==='xml'?doConvertXml():doConvert();}
   if(ctrl&&e.shiftKey&&e.key==='V'){e.preventDefault();showValidation();}
   if(ctrl&&e.shiftKey&&e.key==='C'){
     e.preventDefault();
